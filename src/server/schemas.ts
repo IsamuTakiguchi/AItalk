@@ -65,7 +65,7 @@ export const CoachRequestSchema = z.object({
 });
 export type CoachRequest = z.infer<typeof CoachRequestSchema>;
 
-export type HealthResponse = { ok: true; aiEnabled: boolean };
+export type HealthResponse = { ok: true; aiEnabled: boolean; passcodeRequired: boolean };
 
 export function clampScore(n: number): number {
   if (!Number.isFinite(n)) return 0;

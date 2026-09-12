@@ -1,3 +1,4 @@
+import { passcodeHeaders } from "./passcode";
 import type {
   CoachNote,
   CoachRequest,
@@ -23,7 +24,7 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   try {
     res = await fetch(path, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...passcodeHeaders() },
       body: JSON.stringify(body),
       signal,
     });
@@ -60,6 +61,17 @@ export async function fetchHealth(): Promise<HealthResponse> {
     if (!res.ok) throw GENERIC;
     return (await res.json()) as HealthResponse;
   } catch {
-    return { ok: true, aiEnabled: false };
+    // Unreachable API: assume mock, no gate, so the app still renders.
+    return { ok: true, aiEnabled: false, passcodeRequired: false };
+  }
+}
+
+/** Validates an access code against the server without running an AI request. */
+export async function verifyPasscode(code: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/verify", { headers: { "x-aitalk-pass": code } });
+    return res.ok;
+  } catch {
+    return false;
   }
 }

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { resolveConfig, type ReadEnv, type Vars } from "./env";
-import { guard } from "./guard";
+import { guard, passcodeGuard } from "./guard";
 import { AiError, runCoachNote, runTutorTurn } from "./claude";
 import { mockCoachNote, mockTutorTurn } from "./mock";
 import { CoachRequestSchema, TutorRequestSchema, type HealthResponse } from "./schemas";
@@ -23,9 +23,17 @@ export function createApiApp(readEnv: ReadEnv) {
   });
 
   app.get("/health", (c) => {
-    const body: HealthResponse = { ok: true, aiEnabled: !c.var.config.isMock };
+    const body: HealthResponse = {
+      ok: true,
+      aiEnabled: !c.var.config.isMock,
+      passcodeRequired: Boolean(c.var.config.demoPasscode),
+    };
     return c.json(body);
   });
+
+  // Cheap passcode check: lets the client validate an access code without
+  // spending an AI request or rate-limit budget on it.
+  app.get("/verify", passcodeGuard, (c) => c.json({ ok: true }));
 
   app.post("/tutor", guard, async (c) => {
     const parsed = TutorRequestSchema.safeParse(await c.req.json().catch(() => null));

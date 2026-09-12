@@ -1,6 +1,11 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { BottomNav } from "./components/BottomNav";
+import { PasscodeGate } from "./components/PasscodeGate";
+import { verifyPasscode } from "./lib/api";
+import { clearPasscode, getPasscode } from "./lib/passcode";
 import { dueReviewCount } from "./lib/progress";
+import { useHealth } from "./lib/useHealth";
 import { useProgress } from "./lib/useProgress";
 import { CourseDetail } from "./screens/CourseDetail";
 import { Courses } from "./screens/Courses";
@@ -17,7 +22,36 @@ const IMMERSIVE = [/^\/lesson\//, /^\/talk\/.+/, /^\/review$/];
 export function App() {
   const [progress] = useProgress();
   const { pathname } = useLocation();
+  const { health } = useHealth();
+  const [unlocked, setUnlocked] = useState<boolean | null>(null);
   const immersive = IMMERSIVE.some((re) => re.test(pathname));
+
+  // Validate any stored code once the server tells us one is required. Done
+  // against /api/verify, which runs no AI request and costs no rate budget.
+  useEffect(() => {
+    if (!health) return;
+    if (!health.passcodeRequired) {
+      setUnlocked(true);
+      return;
+    }
+    const stored = getPasscode();
+    if (!stored) {
+      setUnlocked(false);
+      return;
+    }
+    void verifyPasscode(stored).then((ok) => {
+      if (!ok) clearPasscode();
+      setUnlocked(ok);
+    });
+  }, [health]);
+
+  if (health && unlocked === false) {
+    return (
+      <div className="mx-auto h-[100dvh] w-full max-w-[480px]">
+        <PasscodeGate onUnlocked={() => setUnlocked(true)} />
+      </div>
+    );
+  }
 
   return (
     // 100dvh, not 100vh: iOS Safari's toolbar makes vh taller than the viewport.

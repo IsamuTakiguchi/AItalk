@@ -30,6 +30,18 @@ function clientKey(headers: Headers): string {
   );
 }
 
+/**
+ * Passcode check only. Split out from the rate limiter so `/api/verify` can
+ * validate a code without consuming request budget or touching the AI.
+ */
+export const passcodeGuard: MiddlewareHandler<{ Variables: Vars }> = async (c, next) => {
+  const { demoPasscode } = c.var.config;
+  if (demoPasscode && c.req.header("x-aitalk-pass") !== demoPasscode) {
+    return c.json({ code: "unauthorized", messageJa: "アクセスコードが必要です。" }, 401);
+  }
+  await next();
+};
+
 export const guard: MiddlewareHandler<{ Variables: Vars }> = async (c, next) => {
   const { demoPasscode } = c.var.config;
 
