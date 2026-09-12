@@ -61,14 +61,19 @@ npm run dev              # API :3000 + Vite :5173 → http://localhost:5173
 Node のバージョンは `engines.node` と `.node-version` で 22 に固定してあります。
 
 1. [railway.com](https://railway.com) で **New Project → Deploy from GitHub repo** を選び、
-   `IsamuTakiguchi/AItalk` を指定する（デプロイするブランチを選ぶ画面で目的のブランチを指定）
+   `IsamuTakiguchi/AItalk` を指定する（ブランチは `main`）
 2. **Variables** に `ANTHROPIC_API_KEY` を追加する
    （設定しなくてもモックモードで起動します）
 3. **Settings → Networking → Generate Domain** で公開URLを発行する
 4. （任意）**Settings → Deploy → Healthcheck Path** に `/api/health` を入れる
 
 公開URLは HTTPS なので、そのまま実機のスマートフォンで音声認識を試せます。
-以降は該当ブランチへ push するたびに自動で再デプロイされます。
+以降は `main` へ push するたびに自動で再デプロイされます。
+
+> 作業ブランチは `main` です。`claude/loving-knuth-3w2ve7` は開発初期の履歴として
+> 残していますが、以後は使いません。Railway が追跡するブランチは GitHub の
+> デフォルトブランチとは別設定なので、すでに旧ブランチで接続している場合は
+> **Settings → Source → Branch** を `main` に変更してください。
 
 > `railway.json`（Config as Code）は**あえて置いていません**。Railway 側で非推奨となり、
 > 2026-12-01 に廃止予定のためです。ビルド設定は `package.json` と `.node-version` に、
