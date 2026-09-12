@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit",
     "deploy:cf": "vite build && wrangler deploy"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",
     "@hono/node-server": "^2.1.1",

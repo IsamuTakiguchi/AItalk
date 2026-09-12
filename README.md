@@ -56,13 +56,27 @@ npm run dev              # API :3000 + Vite :5173 → http://localhost:5173
 
 ### Railway
 
-追加の設定ファイルは不要です。Nixpacks が `npm run build` → `npm start` を自動実行します。
+**設定ファイルは不要です。** Railway のビルダー（Railpack）が `package.json` を読み、
+`npm ci` → `npm run build` → `npm start` を自動で実行します。
+Node のバージョンは `engines.node` と `.node-version` で 22 に固定してあります。
 
-1. リポジトリを Railway に接続する
-2. Variables に `ANTHROPIC_API_KEY` を設定する
-3. デプロイ（`PORT` は Railway が注入し、`node.ts` がそれを読みます）
+1. [railway.com](https://railway.com) で **New Project → Deploy from GitHub repo** を選び、
+   `IsamuTakiguchi/AItalk` を指定する（デプロイするブランチを選ぶ画面で目的のブランチを指定）
+2. **Variables** に `ANTHROPIC_API_KEY` を追加する
+   （設定しなくてもモックモードで起動します）
+3. **Settings → Networking → Generate Domain** で公開URLを発行する
+4. （任意）**Settings → Deploy → Healthcheck Path** に `/api/health` を入れる
 
-ヘルスチェックのパスは `/api/health` を指定できます。
+公開URLは HTTPS なので、そのまま実機のスマートフォンで音声認識を試せます。
+以降は該当ブランチへ push するたびに自動で再デプロイされます。
+
+> `railway.json`（Config as Code）は**あえて置いていません**。Railway 側で非推奨となり、
+> 2026-12-01 に廃止予定のためです。ビルド設定は `package.json` と `.node-version` に、
+> ヘルスチェックはダッシュボードに置くのが現在の推奨構成です。
+
+**公開する場合はレート制限もあわせて設定してください。** 公開URLは有料APIキーへの
+プロキシになります。Variables に `DEMO_PASSCODE` を設定すると `/api/*` に
+`x-aitalk-pass` ヘッダーが必須になります（後述のセキュリティ節を参照）。
 
 ### Cloudflare Workers
 
