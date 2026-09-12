@@ -1,0 +1,17 @@
+name = "aitalk"
+main = "src/server/worker.ts"
+compatibility_date = "2026-09-11"
+# Required by @anthropic-ai/sdk on Workers.
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[observability]
+enabled = true
+
+# ANTHROPIC_API_KEY (and the optional DEMO_PASSCODE) are secrets. Set them with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+# Never add them to [vars] here — this file is committed and [vars] is plaintext.
