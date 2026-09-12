@@ -19,9 +19,21 @@ type Props = {
  * Mic-first input with a text fallback that is always reachable — Firefox has no
  * SpeechRecognition at all, and a denied mic permission must not be a dead end.
  */
+/**
+ * Remembered for the rest of the page session. This component unmounts between
+ * drill items, so without it a learner who switched to the keyboard would be
+ * handed the microphone again on every single phrase.
+ */
+let preferTextMode = false;
+
 export function SpeakInput({ stt, support, busy, onSubmitText, beforeStart, placeholderJa }: Props) {
   const [text, setText] = useState("");
-  const [textMode, setTextMode] = useState(!support.canSpeak);
+  const [textMode, setTextModeState] = useState(preferTextMode || !support.canSpeak);
+
+  const setTextMode = (on: boolean) => {
+    preferTextMode = on;
+    setTextModeState(on);
+  };
 
   const micUnavailable = !support.canSpeak || stt.permission === "denied";
   const showText = textMode || micUnavailable;
