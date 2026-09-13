@@ -38,6 +38,33 @@ body {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  /* Stops iOS inflating text when the phone is turned to landscape. */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Momentum scrolling inside the scroll containers, as a native app has. */
+main,
+[data-scroll] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/*
+ * Every interactive control clears the 44px minimum touch target. Applied here
+ * rather than per-component so a new button cannot quietly fall below it.
+ * Inline links inside prose are exempt — padding them out would break the text.
+ */
+button,
+a[href]:not([class*="text-"]),
+select,
+input[type="checkbox"],
+input[type="range"] {
+  min-height: 44px;
+}
+
+button.compact,
+a.compact {
+  min-height: 0;
 }
 
 button {

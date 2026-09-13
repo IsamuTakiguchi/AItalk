@@ -2,13 +2,13 @@ import type { MiddlewareHandler } from "hono";
 import type { Vars } from "./env";
 
 /**
- * A public deployment of this app is a proxy to a paid API key, so the AI routes
- * are rate limited and size capped.
+ * A deployment of this app is a proxy to a paid API key, so the AI routes are
+ * rate limited and size capped even though sign-in is required — an allowed user
+ * can still run up a bill, by accident or otherwise.
  *
- * Caveat worth knowing: on Workers this bucket lives in one isolate, so it is a
- * speed bump rather than a wall. Cloudflare's Rate Limiting binding is the real
- * fix for a properly public deploy; this is the portable default that also works
- * on Railway. `DEMO_PASSCODE` is the actual lock.
+ * The bucket is per-process and in-memory, which is sufficient because Railway
+ * runs a single instance; it would need moving to the database if this were ever
+ * scaled horizontally.
  */
 const WINDOW_MS = 5 * 60_000;
 const MAX_PER_WINDOW = 20;
@@ -30,25 +30,7 @@ function clientKey(headers: Headers): string {
   );
 }
 
-/**
- * Passcode check only. Split out from the rate limiter so `/api/verify` can
- * validate a code without consuming request budget or touching the AI.
- */
-export const passcodeGuard: MiddlewareHandler<{ Variables: Vars }> = async (c, next) => {
-  const { demoPasscode } = c.var.config;
-  if (demoPasscode && c.req.header("x-aitalk-pass") !== demoPasscode) {
-    return c.json({ code: "unauthorized", messageJa: "アクセスコードが必要です。" }, 401);
-  }
-  await next();
-};
-
 export const guard: MiddlewareHandler<{ Variables: Vars }> = async (c, next) => {
-  const { demoPasscode } = c.var.config;
-
-  if (demoPasscode && c.req.header("x-aitalk-pass") !== demoPasscode) {
-    return c.json({ code: "unauthorized", messageJa: "アクセスコードが必要です。" }, 401);
-  }
-
   const declared = Number(c.req.header("content-length") ?? 0);
   if (declared > MAX_BODY_BYTES) {
     return c.json({ code: "too_large", messageJa: "送信内容が大きすぎます。" }, 413);

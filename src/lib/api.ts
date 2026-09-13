@@ -1,4 +1,3 @@
-import { passcodeHeaders } from "./passcode";
 import type {
   CoachNote,
   CoachRequest,
@@ -10,6 +9,9 @@ import type {
 /**
  * Typed client for /api/*. Nothing here imports the Anthropic SDK — the key lives
  * only on the server, and the browser bundle has no AI dependency at all.
+ *
+ * Requests are same-origin, so the session cookie is attached automatically and
+ * no auth header is needed.
  */
 export class ApiError extends Error {
   constructor(readonly messageJa: string, readonly code: string) {
@@ -24,7 +26,7 @@ async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promi
   try {
     res = await fetch(path, {
       method: "POST",
-      headers: { "content-type": "application/json", ...passcodeHeaders() },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
       signal,
     });
@@ -62,16 +64,7 @@ export async function fetchHealth(): Promise<HealthResponse> {
     return (await res.json()) as HealthResponse;
   } catch {
     // Unreachable API: assume mock, no gate, so the app still renders.
-    return { ok: true, aiEnabled: false, passcodeRequired: false };
+    return { ok: true, aiEnabled: false, loginConfigured: false };
   }
 }
 
-/** Validates an access code against the server without running an AI request. */
-export async function verifyPasscode(code: string): Promise<boolean> {
-  try {
-    const res = await fetch("/api/verify", { headers: { "x-aitalk-pass": code } });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}

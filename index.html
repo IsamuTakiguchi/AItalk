@@ -2,9 +2,26 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      viewport-fit=cover lets the layout reach under the notch and home indicator,
+      which the safe-area insets then pad back. Pinch zoom is deliberately NOT
+      disabled: user-scalable=no would make the app feel more native at the cost
+      of locking out anyone who needs to zoom.
+    -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="AItalk — 話した分だけうまくなる、AI英会話アプリ" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#4f46e5" />
+
+    <!-- iOS reads these rather than the manifest on older versions. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AItalk" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+
     <title>AItalk — AI英会話</title>
   </head>
   <body>

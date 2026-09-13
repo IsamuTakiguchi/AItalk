@@ -1,41 +1,72 @@
 import { Hono } from "hono";
-import { resolveConfig, type ReadEnv, type Vars } from "./env";
-import { guard, passcodeGuard } from "./guard";
+import { csrf } from "hono/csrf";
 import { AiError, runCoachNote, runTutorTurn } from "./claude";
+import { authRoutes } from "./auth";
+import { loginConfigured, resolveConfig } from "./env";
+import { guard } from "./guard";
 import { mockCoachNote, mockTutorTurn } from "./mock";
-import { CoachRequestSchema, TutorRequestSchema, type HealthResponse } from "./schemas";
+import { readProgress, writeProgress } from "./progressStore";
+import {
+  CoachRequestSchema,
+  ProgressSchema,
+  TutorRequestSchema,
+  type HealthResponse,
+} from "./schemas";
+import { requireAuth, type AuthVars } from "./session";
 
 /**
- * The API, shared verbatim by both deploy targets. Deliberately free of any
- * platform-specific access: no `process`, no `fs`, no asset serving. The only
- * environment access is through the injected `readEnv`.
+ * The API.
+ *
+ * Sign-in is required for everything that reads the learner's data or spends API
+ * budget; only `/api/health` and the auth routes themselves are open.
  *
  * There is no CORS middleware on purpose — dev goes through Vite's proxy and
  * production is same-origin, so a permissive policy would only let other sites
- * drive the API key.
+ * drive the API key using a logged-in user's cookie.
  */
-export function createApiApp(readEnv: ReadEnv) {
-  const app = new Hono<{ Variables: Vars }>().basePath("/api");
+export function createApiApp() {
+  const app = new Hono<{ Variables: AuthVars }>().basePath("/api");
 
   app.use("*", async (c, next) => {
-    c.set("config", resolveConfig(readEnv(c)));
+    c.set("config", resolveConfig());
     await next();
   });
+
+  // Defence in depth alongside SameSite=Lax: rejects state-changing requests
+  // whose Origin does not match this host.
+  app.use("*", csrf());
 
   app.get("/health", (c) => {
     const body: HealthResponse = {
       ok: true,
       aiEnabled: !c.var.config.isMock,
-      passcodeRequired: Boolean(c.var.config.demoPasscode),
+      loginConfigured: loginConfigured(c.var.config),
     };
     return c.json(body);
   });
 
-  // Cheap passcode check: lets the client validate an access code without
-  // spending an AI request or rate-limit budget on it.
-  app.get("/verify", passcodeGuard, (c) => c.json({ ok: true }));
+  app.route("/auth", authRoutes() as unknown as Hono<{ Variables: AuthVars }>);
 
-  app.post("/tutor", guard, async (c) => {
+  // --- learner data -------------------------------------------------------
+
+  app.get("/progress", requireAuth, async (c) => {
+    const data = await readProgress(c.var.config, c.var.user.id);
+    return c.json({ progress: data });
+  });
+
+  app.put("/progress", requireAuth, async (c) => {
+    const parsed = ProgressSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      return c.json({ code: "bad_request", messageJa: "保存内容の形式が正しくありません。" }, 400);
+    }
+    const mode = c.req.query("mode") === "replace" ? "replace" : "merge";
+    const saved = await writeProgress(c.var.config, c.var.user, parsed.data, mode);
+    return c.json({ progress: saved });
+  });
+
+  // --- AI -----------------------------------------------------------------
+
+  app.post("/tutor", requireAuth, guard, async (c) => {
     const parsed = TutorRequestSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) {
       return c.json({ code: "bad_request", messageJa: "リクエストの形式が正しくありません。" }, 400);
@@ -58,7 +89,7 @@ export function createApiApp(readEnv: ReadEnv) {
     }
   });
 
-  app.post("/coach", guard, async (c) => {
+  app.post("/coach", requireAuth, guard, async (c) => {
     const parsed = CoachRequestSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) {
       return c.json({ code: "bad_request", messageJa: "リクエストの形式が正しくありません。" }, 400);

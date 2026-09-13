@@ -2,16 +2,19 @@
 
 話した分だけうまくなる、**スピーキング中心**の英会話学習アプリ。
 [Speak](https://www.speak.com/jp) を参考に、AI講師との会話・カリキュラム・
-発話フィードバック・継続の記録を1つにまとめています。日本語UI / 英語コンテンツ、モバイル優先。
+発話フィードバック・継続の記録を1つにまとめています。
+日本語UI / 英語コンテンツ、**スマホアプリとしてインストールできる PWA** です。
 
 ```
-ブラウザ (React SPA)
+ブラウザ (React SPA / PWA)
+  ├─ Service Worker …… アプリシェルをキャッシュ（ホーム画面から起動できる）
   ├─ Web Speech API …… 音声認識と読み上げはすべて端末内で完結
-  ├─ localStorage   …… 学習進捗・ストリーク・復習リスト
-  └─ fetch /api/*   →  Hono API（共有）
-                          ├─ worker.ts … Cloudflare Workers
-                          └─ node.ts   … Railway / ローカル
-                                 └─ @anthropic-ai/sdk → claude-opus-5
+  └─ fetch /api/*（Cookie 自動送信）
+        ↓
+   Hono API (Node / Railway)
+      ├─ Google OAuth 2.0（認可コードフロー・ログイン必須）
+      ├─ @anthropic-ai/sdk → claude-opus-5
+      └─ Postgres … users / progress（学習記録をアカウントに保存）
 ```
 
 ## 機能
@@ -21,79 +24,116 @@
 | **AI講師とフリートーク** | 8つの話題から選んで自由に英会話。話すたびに添削・日本語訳・次に言えるフレーズが返る |
 | **カリキュラム** | 3コース / 8ユニット / **24レッスン**。各ユニットは「フレーズ練習 → ロールプレイ → フリートーク」の3段構成 |
 | **発話フィードバック** | 語ごとに聞き取り結果を色分け表示し、0〜100の認識スコアを出す（後述の注意点を参照） |
-| **継続の記録** | 連続日数（ストリーク）・XP・1日の目標リング・間違いから自動生成される復習リスト（間隔反復） |
-
-**APIキーなしでもすべての画面が動きます。** キー未設定時は AI講師の応答が
-固定のサンプル（モックモード）になり、それ以外の機能はそのまま使えます。
+| **継続の記録** | 連続日数・XP・1日の目標リング・間違いから自動生成される復習リスト（間隔反復） |
+| **アカウント同期** | Google ログインで、学習記録が端末をまたいで引き継がれる |
 
 ## セットアップ
 
 ```bash
 npm install
-cp .env.example .env     # キーは任意。空のままでもモックモードで動く
+cp .env.example .env     # 少なくとも Google の3つを設定（下記）
 npm run dev              # API :3000 + Vite :5173 → http://localhost:5173
 ```
 
+**ログイン必須です。** 匿名で使えるモードはありません。ローカルで動かすにも
+Google の OAuth クライアントが必要です（作り方は下記）。
+
 **音声認識には安全なコンテキスト（HTTPS または localhost）が必要です。**
-`localhost` はこの条件を満たすため、ローカル開発ではTLSなしで動きます。
-一方 LAN の IP アドレス（`192.168.x.x` など）では動かないので、
-実機で試すときは後述のデプロイ先の HTTPS URL を使ってください。
+LAN の IP アドレス（`192.168.x.x` など）では動かないので、実機で試すときは
+デプロイ先の HTTPS URL を使ってください。
 
 ### スクリプト
 
 | コマンド | 内容 |
 |---|---|
 | `npm run dev` | API と Vite を同時起動（`/api` は Vite が :3000 へ proxy） |
-| `npm run build` | SPA を `dist/` にビルド |
+| `npm run build` | SPA と Service Worker を `dist/` にビルド |
 | `npm start` | `dist/` の配信 + API（Railway が実行するのと同じ構成） |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run deploy:cf` | ビルドして Cloudflare Workers へデプロイ |
+| `npm test` | マージ規則・認証・（DBがあれば）進捗ストアの検証 |
 
-## デプロイ
+`npm test` の進捗ストアの検証はデータベースが要ります。無ければ自動でスキップされます:
 
-同じコードベースが両方で動きます。API は `src/server/app.ts` に1つだけあり、
-プラットフォーム差分は薄いエントリ2枚（`worker.ts` / `node.ts`）に閉じ込めています。
+```bash
+TEST_DATABASE_URL="postgres://…" npm test
+```
 
-### Railway
+## 環境変数
 
-**設定ファイルは不要です。** Railway のビルダー（Railpack）が `package.json` を読み、
+| 変数 | 必須 | 用途 |
+|---|---|---|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Google Cloud Console で発行 |
+| `SESSION_SECRET` | ✅ | セッション Cookie の署名鍵。変更すると全員ログアウトされる |
+| `ALLOWED_EMAILS` | ✅ | ログインを許可するメールアドレス（カンマ区切り） |
+| `APP_URL` | ✅ | 公開オリジン。Google に登録するリダイレクトURIと完全一致させる |
+| `DATABASE_URL` | 推奨 | Railway の Postgres が注入。無い場合は進捗が端末内のみになる |
+| `ANTHROPIC_API_KEY` | 任意 | 未設定ならAI講師は固定のサンプル応答（モックモード） |
+| `PORT` | 任意 | Railway が注入 |
+
+## Google ログインの設定
+
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) でプロジェクトを作る
+2. **OAuth consent screen** を設定
+   - User type は **External**
+   - スコープは既定のまま（このアプリは `openid email profile` しか要求しません）
+   - **Publishing status は「In production」にして構いません。**
+     非センシティブなスコープのみなので Google の審査は不要で、
+     テストユーザー登録も警告画面も7日での失効も発生しません
+3. **Create credentials → OAuth client ID → Web application**
+4. **Authorized redirect URIs** に以下を追加（**完全一致**・HTTPS 必須。localhost だけ例外）
+   - 本番: `https://<あなたのドメイン>/api/auth/callback`
+   - ローカル: `http://localhost:3000/api/auth/callback`
+5. 発行された **Client ID / Client secret** を環境変数に設定
+
+> **⚠️ `ALLOWED_EMAILS` がアクセス制限のすべてです。**
+> 上のとおり Google 側は誰でも通します。このリストが空だと誰もログインできず（fail closed）、
+> 設定を誤って広げると誰でも入れてしまい、API 利用料が青天井になります。
+> デプロイ時に必ず内容を確認してください。
+
+`SESSION_SECRET` の生成:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+## Railway へのデプロイ
+
+**設定ファイルは不要です。** ビルダー（Railpack）が `package.json` を読み、
 `npm ci` → `npm run build` → `npm start` を自動で実行します。
 Node のバージョンは `engines.node` と `.node-version` で 22 に固定してあります。
 
-1. [railway.com](https://railway.com) で **New Project → Deploy from GitHub repo** を選び、
-   `IsamuTakiguchi/AItalk` を指定する（ブランチは `main`）
-2. **Variables** に `ANTHROPIC_API_KEY` を追加する
-   （設定しなくてもモックモードで起動します）
-3. **Settings → Networking → Generate Domain** で公開URLを発行する
-4. （任意）**Settings → Deploy → Healthcheck Path** に `/api/health` を入れる
+1. [railway.com](https://railway.com) で **New Project → GitHub repo** → `IsamuTakiguchi/AItalk`（ブランチは `main`）
+2. **+ New → Database → PostgreSQL** を同じプロジェクトに追加する
+   - 同一プロジェクト内なので `DATABASE_URL`（プライベート接続）が自動で使えます。
+     `DATABASE_PUBLIC_URL` は TCP プロキシ経由で Egress 課金が発生するため使いません
+   - テーブルは初回起動時に自動作成されます（マイグレーション作業は不要）
+3. **Variables** に上の表の変数を設定する
+4. **Settings → Networking → Generate Domain** で公開URLを発行し、
+   その値を `APP_URL` に設定して、Google 側のリダイレクトURIにも登録する
+5. 任意: **Settings → Deploy → Healthcheck Path** に `/api/health`
 
-公開URLは HTTPS なので、そのまま実機のスマートフォンで音声認識を試せます。
 以降は `main` へ push するたびに自動で再デプロイされます。
 
-> 作業ブランチは `main` です。`claude/loving-knuth-3w2ve7` は開発初期の履歴として
-> 残していますが、以後は使いません。Railway が追跡するブランチは GitHub の
-> デフォルトブランチとは別設定なので、すでに旧ブランチで接続している場合は
-> **Settings → Source → Branch** を `main` に変更してください。
+> Railway の追跡ブランチは GitHub のデフォルトブランチとは別設定です。
+> 旧ブランチで接続している場合は **Settings → Source → Branch** を `main` に変更してください。
 
-> `railway.json`（Config as Code）は**あえて置いていません**。Railway 側で非推奨となり、
-> 2026-12-01 に廃止予定のためです。ビルド設定は `package.json` と `.node-version` に、
-> ヘルスチェックはダッシュボードに置くのが現在の推奨構成です。
+**費用の目安**: 従量課金（RAM $10/GB/月、CPU $20/vCPU/月）。
+Postgres が常時起動するため Free の $1/月クレジットでは足りず、
+実質 **Hobby（$5/月）以上**が前提になります。
 
-**このリポジトリは公開されているため、アクセスコードの設定を強く推奨します。**
-公開URLは有料APIキーへのプロキシになります。Variables に `DEMO_PASSCODE` を
-設定すると、アプリの最初にアクセスコードの入力画面が出るようになり、
-正しいコードを知っている人だけが使えます（コードは端末に保存され、次回以降は省略されます）。
+## スマホアプリとして使う
 
-### Cloudflare Workers
+公開URLをスマホで開き、**ホーム画面に追加**するとスタンドアロンで起動します
+（アドレスバーのないアプリ表示）。
 
-```bash
-npx wrangler secret put ANTHROPIC_API_KEY   # 暗号化して保存される
-npm run deploy:cf
-```
+- Android / Chrome: メニュー →「アプリをインストール」
+- iOS / Safari: 共有 →「ホーム画面に追加」
 
-`wrangler.toml` の `[assets]` が `dist/` を配信し、`not_found_handling` で
-SPA のディープリンクを処理します。`run_worker_first = ["/api/*"]` によって
-API だけが Worker に届きます。`nodejs_compat` は `@anthropic-ai/sdk` に必要です。
+ピンチズームは意図的に無効化していません。アプリらしく見せるために
+`user-scalable=no` を入れると、文字を拡大したい人を締め出してしまうためです。
+
+オフラインではアプリシェルだけが起動します。会話とレッスンは API が必要なので
+動きませんが、学習記録は端末に残り、オンラインに戻ると自動で同期されます。
 
 ## 認識スコアについて（重要）
 
@@ -111,18 +151,31 @@ Web Speech API が返すのはテキストだけで、音素単位のデータ�
 - スコアの横に必ず注意書きを表示する
 - **レッスンの達成はスコアで判定しない**（試行したかどうかで判定する）。
   認識の一致度で達成を制限すると、訛りはあっても通じる発話を不当に低く扱うことになる
-- 数値だけでなく、語ごとの色分け・お手本の再生・やり直しを必ず併記する
 
-スコアの算出は `src/lib/scoring.ts` の `scoreUtterance(target, transcript)` に
-集約してあるので、将来クラウドの発音評価（音素レベルのスコアを返すもの）へ
-差し替える場合もこの1関数の置き換えで済みます。
+算出は `src/lib/scoring.ts` の `scoreUtterance(target, transcript)` に集約してあるので、
+将来クラウドの発音評価へ差し替える場合もこの1関数の置き換えで済みます。
+処理は 正規化 → 語単位の **Needleman-Wunsch** アライメント → 語ごとの判定 → スコア化。
+語の類似判定には日本語話者に多い子音の置き換え（l↔r、th→s、v→b など）を畳み込むため、
+`light`/`right`、`think`/`sink`、`very`/`berry` は「完全な誤り」ではなく「おしい」になります。
 
-処理の流れは、正規化（NFKC・小文字化・句読点除去・縮約形の統一・数字の英単語化・
-フィラー除去）→ 語単位の **Needleman-Wunsch** グローバルアライメント →
-語ごとの判定（一致 / おしい / 聞き取れず / 余分）→ スコア化 です。
-語の類似判定には日本語話者に多い子音の置き換え（l↔r、th→s、v→b など）を
-畳み込む簡易的な音写キーを使っているため、`light` と `right`、`think` と `sink`、
-`very` と `berry` は「完全な誤り」ではなく「おしい」として扱われます。
+## 学習記録の同期
+
+進捗はアカウントに紐づいて Postgres に保存され、ログインすればどの端末でも引き継がれます。
+
+**保存は「置換」ではなく「マージ」です。** PC とスマホを同時に使うと、
+ブロブ全体を後勝ちで書くと一方の学習が消えてしまいます。かといって競合エラーを返すと
+学習中に「保存できません」を見せることになります。そこでサーバーは常に
+保存済みと受信分をマージし、すべてのカウンタで**大きい方**を採ります。
+
+この規則は**冪等かつ可換**（同じ保存を2回しても、順序が入れ替わっても結果が同じ）なので、
+再送やリクエストの追い越しで壊れません。XP が二重加算されることもありません。
+`src/lib/mergeProgress.test.ts` がこの性質を検証しています。
+
+例外は「学習データを消去」と「JSONの読み込み」の2つだけで、
+これらは値を下げる操作なのでマージでは表現できず、置換モードで保存します。
+
+読み上げの声と速さは端末ごとの設定なので同期しません
+（iPhone にある音声は Windows には無いため）。
 
 ## 対応ブラウザ
 
@@ -139,28 +192,24 @@ Web Speech API が返すのはテキストだけで、音素単位のデータ�
 
 - **Chrome の音声認識は音声を Google のサーバーへ送信します**（ブラウザの実装によるもので、
   このアプリが送っているわけではありません）。読み上げは端末内で行われます。
-- 学習進捗は `localStorage` にのみ保存され、サーバーには送信されません。
-  端末間で同期はされず、iOS Safari では長期間アクセスがないと消えることがあります。
-  マイページから JSON で書き出し・読み込みができます。
 - AI講師に送られるのは会話のテキストのみです（音声は送信されません）。
+- Google から取得するのは `openid email profile`（名前・メールアドレス・プロフィール画像）だけです。
+- 学習記録はアカウントに紐づいてサーバーに保存されます。マイページから書き出し・消去ができます。
 
 ## セキュリティ
 
-- `ANTHROPIC_API_KEY` はサーバー側でのみ読み込まれます。`VITE_` 接頭辞は付けないでください
-  （付けるとブラウザのバンドルに埋め込まれます）。クライアントは `/api/*` を叩くだけで、
-  Anthropic SDK への依存を持ちません。
-- 公開URLは有料APIキーへのプロキシになるため、`/api/tutor` と `/api/coach` には
-  IP単位のレート制限（5分あたり20回）とボディサイズ上限（32KB）を入れています。
-- `DEMO_PASSCODE` を設定すると、アプリ起動時にアクセスコードの入力を求めます。
-  入力されたコードは `GET /api/verify`（AI呼び出しもレート制限の消費もしない軽量な確認用）で
-  検証してから保存するため、誤ったコードで入っておいて会話の途中で失敗することはありません。
-- なお Workers ではレート制限のカウンタが isolate 単位になるため、
-  本格的に公開する場合は Cloudflare の Rate Limiting か `DEMO_PASSCODE` を併用してください。
-- アクセスコードは「このデモを使えるかどうか」だけを決める共有の合言葉で、
-  ユーザー認証ではありません（個人を識別せず、権限の区別もありません）。
-- ローカルの秘密情報は `.env`（Node側）と `.dev.vars`（`wrangler dev` 側）に置きます。
-  どちらも `.gitignore` 済みです。
+- `ANTHROPIC_API_KEY` はサーバー側でのみ読み込まれます。`VITE_` 接頭辞は付けないでください。
+  クライアントは `/api/*` を叩くだけで、Anthropic SDK への依存を持ちません。
+- **ログイン必須**。`/api/health` と認証ルート以外は、すべてセッションが必要です。
+- セッションは **HttpOnly / Secure / SameSite=Lax** の署名付き Cookie。
+- OAuth コールバックは `state` パラメータで検証します（認可コードの差し替え対策）。
+- 他サイトからのフォーム送信を防ぐため `csrf()` を併用しています。
+  なお `application/json` のクロスオリジン要求はブラウザのプリフライトが防ぎます
+  （このアプリは CORS ヘッダーを返さないため）。
+- AI ルートには IP 単位のレート制限（5分20回）とボディサイズ上限（32KB）があります。
+  ログインを許可した利用者でも API 予算を使い切りうるためです。
+- `.env` は `.gitignore` 済みです。コミット前に `git diff --staged` で確認してください。
 
 ## v1 の範囲外
 
-認証・課金・動画レッスン・端末間同期・リーグ（対人ランキング）は含まれていません。
+課金・動画レッスン・リーグ（対人ランキング）・プッシュ通知は含まれていません。

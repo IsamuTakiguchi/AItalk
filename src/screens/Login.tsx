@@ -1,0 +1,58 @@
+/**
+ * The whole app sits behind this. Sign-in is required, so there is no "continue
+ * without an account" path — offering one would mean maintaining two data models.
+ */
+export function Login({ loginConfigured }: { loginConfigured: boolean | null }) {
+  return (
+    <div
+      className="flex min-h-[100dvh] flex-col justify-center px-6"
+      style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="rounded-3xl bg-white p-7 shadow-sm">
+        <p className="text-center text-5xl">🗣️</p>
+        <h1 className="mt-4 text-center text-2xl font-bold">AItalk</h1>
+        <p className="mt-1 text-center text-xs text-ink-500">英語は、話した分だけうまくなる</p>
+
+        <p className="mt-6 text-center text-xs leading-relaxed text-ink-600">
+          Google アカウントでログインすると、学習の記録が端末をまたいで引き継がれます。
+        </p>
+
+        {loginConfigured === false ? (
+          <p className="mt-6 rounded-xl bg-near/5 px-3 py-3 text-center text-xs leading-relaxed text-near">
+            このデプロイではログインが設定されていません。
+            <br />
+            管理者に連絡してください。
+          </p>
+        ) : (
+          <a
+            href="/api/auth/google"
+            aria-disabled={loginConfigured === null}
+            className={`mt-6 flex min-h-12 items-center justify-center gap-3 rounded-xl border border-ink-400/25 bg-white
+              py-3 text-sm font-semibold text-ink-800 shadow-sm transition active:scale-[0.98]
+              ${loginConfigured === null ? "pointer-events-none opacity-50" : ""}`}
+          >
+            <GoogleMark />
+            Google でログイン
+          </a>
+        )}
+
+        <p className="mt-5 text-center text-[11px] leading-relaxed text-ink-400">
+          利用が許可されたアカウントのみログインできます。
+          取得するのは名前・メールアドレス・プロフィール画像だけです。
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Google's mark, inlined so the login screen needs no network request. */
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.35 0-4.34-1.58-5.05-3.71H.96v2.33A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.95 10.71a5.41 5.41 0 0 1 0-3.42V4.96H.96a9 9 0 0 0 0 8.08l2.99-2.33Z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l2.99 2.33C4.66 5.16 6.65 3.58 9 3.58Z" />
+    </svg>
+  );
+}

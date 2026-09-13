@@ -12,12 +12,14 @@ import { probeSpeechSupport } from "../lib/speech/support";
 import { useSpeechRecognition } from "../lib/speech/useSpeechRecognition";
 import { useSpeechSynthesis } from "../lib/speech/useSpeechSynthesis";
 import { useAiEnabled } from "../lib/useHealth";
-import { setProgress, useProgress } from "../lib/useProgress";
+import { replaceServerProgress, useProgress, useSyncStatus } from "../lib/useProgress";
+import type { SessionUser } from "../server/session";
 
 const GOALS = [20, 50, 100];
 
-export function Profile() {
+export function Profile({ user, onSignOut }: { user: SessionUser; onSignOut: () => Promise<void> }) {
   const [progress, update] = useProgress();
+  const syncStatus = useSyncStatus();
   const aiEnabled = useAiEnabled();
   const support = useMemo(() => probeSpeechSupport(), []);
   const tts = useSpeechSynthesis(progress.settings.voiceUri, progress.settings.speechRate);
@@ -44,12 +46,47 @@ export function Profile() {
       setImportMsg("読み込めませんでした。AItalk で書き出したファイルを選んでください。");
       return;
     }
-    setProgress(imported);
+    void replaceServerProgress(imported);
     setImportMsg("学習データを読み込みました。");
   };
 
   return (
     <Screen titleJa="マイページ">
+      <section className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          {user.picture ? (
+            <img
+              src={user.picture}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="h-11 w-11 shrink-0 rounded-full"
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-lg">
+              👤
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{user.name ?? "ログイン中"}</p>
+            <p className="truncate text-[11px] text-ink-500">{user.email}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void onSignOut()}
+            className="min-h-11 shrink-0 rounded-xl border border-ink-400/25 px-3 text-xs font-semibold text-ink-600 active:scale-95"
+          >
+            ログアウト
+          </button>
+        </div>
+        <p className="mt-3 text-[11px] text-ink-400">
+          {syncStatus === "saving"
+            ? "同期中…"
+            : syncStatus === "offline"
+              ? "オフラインです。オンラインに戻ると自動で同期します。"
+              : "学習の記録はアカウントに保存され、他の端末にも引き継がれます。"}
+        </p>
+      </section>
+
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="text-sm font-bold text-ink-600">学習の記録</h2>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -202,8 +239,8 @@ export function Profile() {
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="text-sm font-bold text-ink-600">学習データ</h2>
         <p className="mt-1 text-[11px] leading-relaxed text-ink-500">
-          進捗はこの端末のブラウザ内にのみ保存されます。端末間では同期されず、
-          iOS Safari では長く使わないと消えることがあるため、ときどき書き出しておくと安心です。
+          進捗はアカウントに保存され、ログインすればどの端末でも引き継がれます。
+          書き出しはバックアップ用です。読み込みと消去は、アカウント側の記録も置き換えます。
         </p>
         <div className="mt-3 flex gap-2">
           <button
@@ -239,7 +276,7 @@ export function Profile() {
           onClick={() => {
             if (!confirm("学習データをすべて消去します。よろしいですか？")) return;
             resetProgress();
-            setProgress(emptyProgress());
+            void replaceServerProgress(emptyProgress());
           }}
           className="mt-3 w-full rounded-xl border border-bad/30 py-2 text-xs font-semibold text-bad active:scale-95"
         >
