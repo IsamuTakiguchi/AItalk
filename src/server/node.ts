@@ -30,6 +30,9 @@ console.log(
     ? `[aitalk] Google sign-in enabled for ${cfg.allowedEmails.length} allowed address(es).`
     : "[aitalk] Google sign-in NOT configured — set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and SESSION_SECRET.",
 );
+// Printed so the exact value can be copied straight into the Google console;
+// it has to match there character for character or sign-in fails.
+console.log(`[aitalk] OAuth redirect URI (register this with Google): ${cfg.redirectUri}`);
 if (loginConfigured(cfg) && cfg.allowedEmails.length === 0) {
   console.warn("[aitalk] ALLOWED_EMAILS is empty — nobody will be able to sign in.");
 }

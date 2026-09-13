@@ -65,7 +65,7 @@ TEST_DATABASE_URL="postgres://…" npm test
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | ✅ | Google Cloud Console で発行 |
 | `SESSION_SECRET` | ✅ | セッション Cookie の署名鍵。変更すると全員ログアウトされる |
 | `ALLOWED_EMAILS` | ✅ | ログインを許可するメールアドレス（カンマ区切り） |
-| `APP_URL` | ✅ | 公開オリジン。Google に登録するリダイレクトURIと完全一致させる |
+| `APP_URL` | ローカルのみ | 公開オリジン。Railway では `RAILWAY_PUBLIC_DOMAIN` から自動導出されるため設定不要（独自ドメイン時のみ設定） |
 | `DATABASE_URL` | 推奨 | Railway の Postgres が注入。無い場合は進捗が端末内のみになる |
 | `ANTHROPIC_API_KEY` | 任意 | 未設定ならAI講師は固定のサンプル応答（モックモード） |
 | `PORT` | 任意 | Railway が注入 |
@@ -81,8 +81,27 @@ TEST_DATABASE_URL="postgres://…" npm test
      テストユーザー登録も警告画面も7日での失効も発生しません
 3. **Create credentials → OAuth client ID → Web application**
 4. **Authorized redirect URIs** に以下を追加（**完全一致**・HTTPS 必須。localhost だけ例外）
-   - 本番: `https://<あなたのドメイン>/api/auth/callback`
-   - ローカル: `http://localhost:3000/api/auth/callback`
+
+   | 環境 | 登録する値 |
+   |---|---|
+   | ローカル | `http://localhost:3000/api/auth/callback` |
+   | Railway | `https://<Railwayが発行したドメイン>/api/auth/callback` |
+
+   Railway のドメインは **Settings → Networking → Generate Domain** で発行され、
+   `xxxxx.up.railway.app` の形になります。たとえば発行された値が
+   `aitalk-production-a1b2.up.railway.app` なら、登録するのは
+
+   ```
+   https://aitalk-production-a1b2.up.railway.app/api/auth/callback
+   ```
+
+   です。起動時にサーバーが実際に使う値をログへ出力するので、そこからコピーするのが確実です:
+
+   ```
+   [aitalk] OAuth redirect URI (register this with Google): https://…/api/auth/callback
+   ```
+
+   ローカルと本番の両方を登録しておけば、どちらでも動きます。
 5. 発行された **Client ID / Client secret** を環境変数に設定
 
 > **⚠️ `ALLOWED_EMAILS` がアクセス制限のすべてです。**
@@ -108,8 +127,10 @@ Node のバージョンは `engines.node` と `.node-version` で 22 に固定�
      `DATABASE_PUBLIC_URL` は TCP プロキシ経由で Egress 課金が発生するため使いません
    - テーブルは初回起動時に自動作成されます（マイグレーション作業は不要）
 3. **Variables** に上の表の変数を設定する
-4. **Settings → Networking → Generate Domain** で公開URLを発行し、
-   その値を `APP_URL` に設定して、Google 側のリダイレクトURIにも登録する
+4. **Settings → Networking → Generate Domain** で公開URLを発行する
+   - `APP_URL` の設定は不要です（`RAILWAY_PUBLIC_DOMAIN` から自動導出されます）
+   - 発行されたドメインを使って、Google 側に
+     `https://<発行されたドメイン>/api/auth/callback` を登録してください
 5. 任意: **Settings → Deploy → Healthcheck Path** に `/api/health`
 
 以降は `main` へ push するたびに自動で再デプロイされます。

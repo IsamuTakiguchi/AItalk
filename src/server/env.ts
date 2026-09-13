@@ -18,6 +18,8 @@ export type AppConfig = {
   allowedEmails: string[];
   /** Public origin, used to build the OAuth redirect URI. */
   appUrl: string;
+  /** Where Google must send the user back. Registered in the Google console. */
+  redirectUri: string;
 
   databaseUrl?: string;
 };
@@ -29,9 +31,27 @@ function clean(v: string | undefined): string | undefined {
   return t ? t : undefined;
 }
 
+/**
+ * The public origin.
+ *
+ * Railway injects RAILWAY_PUBLIC_DOMAIN (bare host, no protocol) once a domain
+ * is generated, so APP_URL only has to be set for a custom domain or locally.
+ * Deriving it removes the most likely way to break sign-in: an APP_URL that does
+ * not exactly match the redirect URI registered with Google fails the whole
+ * flow with `redirect_uri_mismatch`.
+ */
+function resolveAppUrl(raw: NodeJS.ProcessEnv, port: string): string {
+  const explicit = clean(raw.APP_URL);
+  if (explicit) return explicit.replace(/\/+$/, "");
+  const railway = clean(raw.RAILWAY_PUBLIC_DOMAIN);
+  if (railway) return `https://${railway.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`;
+  return `http://localhost:${port}`;
+}
+
 export function resolveConfig(raw: NodeJS.ProcessEnv = process.env): AppConfig {
   const anthropicApiKey = clean(raw.ANTHROPIC_API_KEY);
   const port = raw.PORT ?? "3000";
+  const appUrl = resolveAppUrl(raw, port);
 
   return {
     anthropicApiKey,
@@ -43,7 +63,8 @@ export function resolveConfig(raw: NodeJS.ProcessEnv = process.env): AppConfig {
       .split(",")
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean),
-    appUrl: (clean(raw.APP_URL) ?? `http://localhost:${port}`).replace(/\/+$/, ""),
+    appUrl,
+    redirectUri: `${appUrl}/api/auth/callback`,
     databaseUrl: clean(raw.DATABASE_URL),
   };
 }

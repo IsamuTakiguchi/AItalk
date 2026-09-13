@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
-import { isAllowedEmail, loginConfigured, type AppConfig, type Vars } from "./env";
+import { isAllowedEmail, loginConfigured, type Vars } from "./env";
 import { clearSession, issueSession, readSession } from "./session";
 import { upsertUser } from "./users";
 
@@ -16,8 +16,6 @@ type GoogleClaims = {
   name?: string;
   picture?: string;
 };
-
-const redirectUri = (config: AppConfig) => `${config.appUrl}/api/auth/callback`;
 
 /**
  * Decodes the ID token payload without verifying the signature.
@@ -87,7 +85,7 @@ export function authRoutes() {
 
     const url = new URL(AUTH_ENDPOINT);
     url.searchParams.set("client_id", config.googleClientId!);
-    url.searchParams.set("redirect_uri", redirectUri(config));
+    url.searchParams.set("redirect_uri", config.redirectUri);
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", "openid email profile");
     url.searchParams.set("state", state);
@@ -118,7 +116,7 @@ export function authRoutes() {
         code,
         client_id: config.googleClientId!,
         client_secret: config.googleClientSecret!,
-        redirect_uri: redirectUri(config),
+        redirect_uri: config.redirectUri,
         grant_type: "authorization_code",
       }),
     });
