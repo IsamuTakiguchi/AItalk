@@ -55,10 +55,40 @@ export type FreeTalkLesson = LessonBase & {
 
 export type Lesson = PhraseLesson | RoleplayLesson | FreeTalkLesson;
 
+/**
+ * One card of the unit's opening explanation.
+ *
+ * Authored here rather than fetched, so the lecture always exists even when no
+ * video can be found or played. `en` is read aloud; `ja` is the explanation.
+ */
+export type LectureSlide = {
+  headingJa: string;
+  bodyJa: string;
+  /** Optional example read aloud by the speech synthesiser. */
+  example?: { en: string; ja: string };
+};
+
+export type UnitLecture = {
+  titleJa: string;
+  /** What the learner should be able to do after the unit. */
+  goalJa: string;
+  slides: LectureSlide[];
+  /**
+   * Search terms used to look for a supporting YouTube video.
+   *
+   * The result is a third-party video, not a lesson produced for this app, so
+   * the UI labels it as a reference rather than as "the teacher". Absent means
+   * no video is looked for at all.
+   */
+  youtubeQuery?: string;
+};
+
 export type Unit = {
   id: string;
   titleJa: string;
   descJa: string;
+  /** Shown before the unit's lessons, as Speak opens a unit with a video. */
+  lecture: UnitLecture;
   lessons: Lesson[];
 };
 

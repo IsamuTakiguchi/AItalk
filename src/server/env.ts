@@ -21,6 +21,9 @@ export type AppConfig = {
   /** Where Google must send the user back. Registered in the Google console. */
   redirectUri: string;
 
+  /** Absent => unit lectures show slides only, with no supporting video. */
+  youtubeApiKey?: string;
+
   databaseUrl?: string;
 };
 
@@ -65,6 +68,7 @@ export function resolveConfig(raw: NodeJS.ProcessEnv = process.env): AppConfig {
       .filter(Boolean),
     appUrl,
     redirectUri: `${appUrl}/api/auth/callback`,
+    youtubeApiKey: clean(raw.YOUTUBE_API_KEY),
     databaseUrl: clean(raw.DATABASE_URL),
   };
 }

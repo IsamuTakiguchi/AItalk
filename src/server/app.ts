@@ -13,6 +13,7 @@ import {
   type HealthResponse,
 } from "./schemas";
 import { requireAuth, type AuthVars } from "./session";
+import { getUnitVideo } from "./youtube";
 
 /**
  * The API.
@@ -62,6 +63,20 @@ export function createApiApp() {
     const mode = c.req.query("mode") === "replace" ? "replace" : "merge";
     const saved = await writeProgress(c.var.config, c.var.user, parsed.data, mode);
     return c.json({ progress: saved });
+  });
+
+  /**
+   * The supporting video for a unit's opening lecture.
+   *
+   * Separate from the lecture text, which ships with the client: the slides must
+   * render even when this returns nothing, so the client asks for the video on
+   * its own and treats a null as normal rather than as an error.
+   */
+  app.get("/lecture/:unitId/video", requireAuth, async (c) => {
+    const unitId = c.req.param("unitId");
+    const query = c.req.query("q");
+    const video = await getUnitVideo(c.var.config, unitId, query).catch(() => null);
+    return c.json({ video });
   });
 
   // --- AI -----------------------------------------------------------------

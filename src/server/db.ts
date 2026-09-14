@@ -49,6 +49,16 @@ export async function ensureSchema(db: postgres.Sql): Promise<void> {
       )
     `;
     await db`
+      create table if not exists unit_videos (
+        unit_id     text primary key,
+        query       text not null,
+        -- Null means "searched and found nothing usable". Stored rather than
+        -- left absent so a fruitless query does not re-spend the daily quota.
+        video       jsonb,
+        updated_at  timestamptz not null default now()
+      )
+    `;
+    await db`
       create table if not exists progress (
         user_id     text primary key references users(id) on delete cascade,
         data        jsonb not null,

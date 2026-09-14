@@ -9,6 +9,7 @@ import { CourseDetail } from "./screens/CourseDetail";
 import { Courses } from "./screens/Courses";
 import { FreeTalk } from "./screens/FreeTalk";
 import { Home } from "./screens/Home";
+import { LectureScreen } from "./screens/Lecture";
 import { LessonScreen } from "./screens/Lesson";
 import { Login } from "./screens/Login";
 import { Profile } from "./screens/Profile";
@@ -16,7 +17,7 @@ import { Review } from "./screens/Review";
 import { TalkSession } from "./screens/TalkSession";
 
 /** Immersive screens hide the tab bar so the mic button owns the thumb zone. */
-const IMMERSIVE = [/^\/lesson\//, /^\/talk\/.+/, /^\/review$/];
+const IMMERSIVE = [/^\/lesson\//, /^\/lecture\//, /^\/talk\/.+/, /^\/review$/];
 
 export function App() {
   const [progress] = useProgress();
@@ -65,6 +66,7 @@ export function App() {
           <Route path="/" element={<Home />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:courseId" element={<CourseDetail />} />
+          <Route path="/lecture/:unitId" element={<LectureScreen />} />
           <Route path="/lesson/:lessonId" element={<LessonScreen />} />
           <Route path="/talk" element={<FreeTalk />} />
           <Route path="/talk/:topicId" element={<TalkSession />} />

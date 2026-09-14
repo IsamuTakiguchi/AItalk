@@ -1,3 +1,4 @@
+import { UNIT_LECTURES } from "./lectures";
 import type { Course } from "./types";
 
 export const courseBasics: Course = {
@@ -12,6 +13,7 @@ export const courseBasics: Course = {
       id: "basics-intro",
       titleJa: "自己紹介",
       descJa: "名前・仕事・住んでいる場所を、自分の言葉で言えるようにする",
+      lecture: UNIT_LECTURES["basics-intro"]!,
       lessons: [
         {
           id: "basics-intro-phrase",
@@ -79,6 +81,7 @@ export const courseBasics: Course = {
       id: "basics-shop",
       titleJa: "買い物とカフェ",
       descJa: "お店で注文する・値段を聞く・支払う",
+      lecture: UNIT_LECTURES["basics-shop"]!,
       lessons: [
         {
           id: "basics-shop-phrase",
@@ -146,6 +149,7 @@ export const courseBasics: Course = {
       id: "basics-directions",
       titleJa: "道をたずねる",
       descJa: "行き方を聞く・聞き返す・お礼を言う",
+      lecture: UNIT_LECTURES["basics-directions"]!,
       lessons: [
         {
           id: "basics-directions-phrase",

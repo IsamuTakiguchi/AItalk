@@ -1,3 +1,4 @@
+import { UNIT_LECTURES } from "./lectures";
 import type { Course } from "./types";
 
 export const courseBusiness: Course = {
@@ -12,6 +13,7 @@ export const courseBusiness: Course = {
       id: "business-meeting",
       titleJa: "会議で意見を言う",
       descJa: "賛成・反対・提案を、理由をつけて伝える",
+      lecture: UNIT_LECTURES["business-meeting"]!,
       lessons: [
         {
           id: "business-meeting-phrase",
@@ -79,6 +81,7 @@ export const courseBusiness: Course = {
       id: "business-interview",
       titleJa: "英語面接",
       descJa: "強みを伝える・経験を語る・逆質問する",
+      lecture: UNIT_LECTURES["business-interview"]!,
       lessons: [
         {
           id: "business-interview-phrase",

@@ -1,3 +1,4 @@
+import { UNIT_LECTURES } from "./lectures";
 import type { Course } from "./types";
 
 export const courseDaily: Course = {
@@ -12,6 +13,7 @@ export const courseDaily: Course = {
       id: "daily-travel",
       titleJa: "旅行と空港",
       descJa: "チェックイン・入国審査・ホテルでのやりとり",
+      lecture: UNIT_LECTURES["daily-travel"]!,
       lessons: [
         {
           id: "daily-travel-phrase",
@@ -79,6 +81,7 @@ export const courseDaily: Course = {
       id: "daily-smalltalk",
       titleJa: "友だちとの雑談",
       descJa: "週末の話・感想を言う・話をつなげる",
+      lecture: UNIT_LECTURES["daily-smalltalk"]!,
       lessons: [
         {
           id: "daily-smalltalk-phrase",
@@ -146,6 +149,7 @@ export const courseDaily: Course = {
       id: "daily-trouble",
       titleJa: "体調とトラブル",
       descJa: "具合が悪いと伝える・困りごとを説明する",
+      lecture: UNIT_LECTURES["daily-trouble"]!,
       lessons: [
         {
           id: "daily-trouble-phrase",
