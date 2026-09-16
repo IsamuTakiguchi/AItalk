@@ -8,7 +8,7 @@ export function Login({ loginConfigured }: { loginConfigured: boolean | null }) 
       className="flex min-h-[100dvh] flex-col justify-center px-6"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="rounded-3xl bg-white p-7 shadow-sm">
+      <div className="rounded-3xl glass p-7">
         <p className="text-center text-5xl">🗣️</p>
         <h1 className="mt-4 text-center text-2xl font-bold">AItalk</h1>
         <p className="mt-1 text-center text-xs text-ink-500">英語は、話した分だけうまくなる</p>
@@ -28,7 +28,7 @@ export function Login({ loginConfigured }: { loginConfigured: boolean | null }) 
             href="/api/auth/google"
             aria-disabled={loginConfigured === null}
             className={`mt-6 flex min-h-12 items-center justify-center gap-3 rounded-xl border border-ink-400/25 bg-white
-              py-3 text-sm font-semibold text-ink-800 shadow-sm transition active:scale-[0.98]
+              py-3 text-sm font-semibold text-ink-800 shadow-sm press
               ${loginConfigured === null ? "pointer-events-none opacity-50" : ""}`}
           >
             <GoogleMark />

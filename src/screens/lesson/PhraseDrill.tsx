@@ -96,7 +96,7 @@ export function PhraseDrill({ phrases, onFinish, finishLabelJa = "結果を見�
         </span>
       </div>
 
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl glass p-4">
         <p className="text-[11px] font-medium text-ink-400">この文を声に出して読みましょう</p>
         <p className="mt-2 text-xl leading-relaxed font-semibold">{current.en}</p>
         {progress.settings.jaHintsVisible && (
@@ -109,7 +109,7 @@ export function PhraseDrill({ phrases, onFinish, finishLabelJa = "結果を見�
               tts.unlock();
               void tts.speak(current.en);
             }}
-            className="rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 active:scale-95"
+            className="rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 press"
           >
             🔈 お手本を聞く
           </button>
@@ -119,7 +119,7 @@ export function PhraseDrill({ phrases, onFinish, finishLabelJa = "結果を見�
               tts.unlock();
               void tts.speak(current.en, { rate: 0.65 });
             }}
-            className="rounded-lg bg-ink-400/10 px-3 py-2 text-xs font-semibold text-ink-600 active:scale-95"
+            className="rounded-lg bg-ink-400/10 px-3 py-2 text-xs font-semibold text-ink-600 press"
           >
             🐢 ゆっくり
           </button>
@@ -127,7 +127,7 @@ export function PhraseDrill({ phrases, onFinish, finishLabelJa = "結果を見�
       </div>
 
       {result ? (
-        <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="space-y-4 rounded-2xl glass p-4">
           {result.empty ? (
             <p className="text-center text-sm font-medium text-near">
               音声が聞き取れませんでした。もう一度お願いします。
@@ -145,14 +145,14 @@ export function PhraseDrill({ phrases, onFinish, finishLabelJa = "結果を見�
             <button
               type="button"
               onClick={retry}
-              className="flex-1 rounded-xl border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 active:scale-[0.98]"
+              className="flex-1 rounded-xl border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 press"
             >
               もう一度
             </button>
             <button
               type="button"
               onClick={advance}
-              className="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white active:scale-[0.98]"
+              className="flex-1 rounded-xl glass-filled py-3 text-sm font-semibold text-white press"
             >
               {index + 1 >= phrases.length ? finishLabelJa : "次へ"}
             </button>

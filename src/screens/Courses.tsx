@@ -9,14 +9,15 @@ export function Courses() {
 
   return (
     <Screen titleJa="コース" subtitleJa="レベルに合わせて順番に進めましょう">
-      {COURSES.map((course) => {
+      {COURSES.map((course, i) => {
         const ids = course.units.flatMap((u) => u.lessons.map((l) => l.id));
         const { done, total } = courseProgress(progress, ids);
         return (
           <Link
             key={course.id}
             to={`/courses/${course.id}`}
-            className="block rounded-2xl bg-white p-4 shadow-sm active:scale-[0.99]"
+            className="rise-in block rounded-2xl glass p-4 press"
+            style={{ animationDelay: `${i * 70}ms` }}
           >
             <div className="flex items-start gap-3">
               <span className="text-3xl">{course.emoji}</span>

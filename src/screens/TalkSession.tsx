@@ -16,7 +16,7 @@ export function TalkSession() {
   if (finished !== null) {
     return (
       <Screen titleJa="おつかれさまでした" back>
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+        <div className="rounded-2xl glass p-6 text-center">
           <p className="text-4xl">👏</p>
           <h2 className="mt-2 text-lg font-bold">{finished} 往復 話しました</h2>
           <p className="mt-1 text-xs text-ink-500">
@@ -27,13 +27,13 @@ export function TalkSession() {
           <Link
             to="/talk"
             replace
-            className="block rounded-xl bg-brand-600 py-3 text-center text-sm font-semibold text-white active:scale-[0.98]"
+            className="block rounded-xl glass-filled py-3 text-center text-sm font-semibold text-white press"
           >
             別の話題で話す
           </Link>
           <Link
             to="/"
-            className="block rounded-xl border border-ink-400/25 bg-white py-3 text-center text-sm font-semibold text-ink-700 active:scale-[0.98]"
+            className="block rounded-xl border border-ink-400/25 bg-white py-3 text-center text-sm font-semibold text-ink-700 press"
           >
             ホームに戻る
           </Link>

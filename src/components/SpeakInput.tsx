@@ -53,7 +53,7 @@ export function SpeakInput({ stt, support, busy, onSubmitText, beforeStart, plac
       )}
 
       {(stt.isListening || stt.interim) && (
-        <div className="rounded-xl bg-white p-3 shadow-sm">
+        <div className="rounded-xl glass p-3">
           <p className="text-[11px] font-medium text-ink-400">聞き取り中…</p>
           <p className="mt-1 min-h-6 text-sm text-ink-800">
             {stt.interim || stt.final || <span className="text-ink-400">話してください</span>}
@@ -79,7 +79,7 @@ export function SpeakInput({ stt, support, busy, onSubmitText, beforeStart, plac
             type="button"
             onClick={submit}
             disabled={busy || !text.trim()}
-            className="shrink-0 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white active:scale-95 disabled:bg-ink-400"
+            className="shrink-0 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white press disabled:bg-ink-400"
           >
             送信
           </button>

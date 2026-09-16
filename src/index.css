@@ -23,6 +23,10 @@
   /* Latin-first stacks render Japanese badly on some Android devices. */
   --font-sans: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+
+  /* Overshoots slightly on release, which is what makes a press feel physical. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-glide: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html,
@@ -32,8 +36,8 @@ body,
 }
 
 body {
-  background: #f6f7fb;
   color: var(--color-ink-900);
+  background: #eef1f9;
   /* Kill iOS rubber-banding and the grey tap flash so it reads as an app. */
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
@@ -42,6 +46,223 @@ body {
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
 }
+
+/* ---------------------------------------------------------------------------
+ * Backdrop
+ *
+ * Glass needs something behind it to refract, so the app sits on a slow drift of
+ * coloured blobs rather than a flat fill. It is a single fixed element animated
+ * only with `transform`, so it stays on one compositor layer and never triggers
+ * layout or paint while scrolling.
+ * ------------------------------------------------------------------------- */
+.aurora {
+  position: fixed;
+  inset: -30%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 22% 18%, rgba(99, 102, 241, 0.42), transparent 70%),
+    radial-gradient(34% 30% at 82% 26%, rgba(56, 189, 248, 0.34), transparent 70%),
+    radial-gradient(42% 36% at 62% 82%, rgba(167, 139, 250, 0.38), transparent 70%),
+    radial-gradient(30% 28% at 14% 78%, rgba(244, 114, 182, 0.24), transparent 70%);
+  animation: aurora-drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -2.5%, 0) scale(1.08); }
+  100% { transform: translate3d(-2.5%, 2%, 0) scale(1.04); }
+}
+
+/* ---------------------------------------------------------------------------
+ * Glass surfaces
+ *
+ * Two tiers on purpose. `backdrop-filter` is the expensive part — it forces the
+ * browser to sample and blur everything underneath on every frame — so it is
+ * reserved for the two pinned surfaces where the effect is actually visible as
+ * content slides beneath: the screen header and the tab bar.
+ *
+ * Everything that scrolls uses `.glass`, which fakes the same material with a
+ * translucent fill, a bright top edge and a soft shadow. Against the aurora it
+ * reads as the same family, and costs nothing per frame. Putting a real blur on
+ * every card in a scrolling list is what makes this kind of UI stutter.
+ *
+ * Do not hand-write `-webkit-backdrop-filter` here. Lightning CSS (which
+ * Tailwind runs over this file) folds a property and its prefixed twin into one
+ * declaration and keeps whichever came last, then re-emits the prefixes its
+ * targets need — so writing the prefix ourselves silently deletes the standard
+ * property from the build, and the blur stops working everywhere but Safari.
+ * ------------------------------------------------------------------------- */
+.glass {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 255, 255, 0.78)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    /* specular highlight along the top edge */
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px -12px rgba(49, 46, 129, 0.18);
+}
+
+.glass-strong {
+  /*
+   * 0.82, not the 0.72 that looks better in isolation: these two surfaces carry
+   * the page title and the tab labels, and at 0.72 a card sliding underneath
+   * stayed readable enough to compete with them. The hairline is a faint ink
+   * line rather than white — against white content a white border is invisible,
+   * and the edge of the glass needs to be findable.
+   */
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 32px -16px rgba(49, 46, 129, 0.35);
+}
+
+/* Tinted glass, for the accent surfaces. */
+.glass-brand {
+  background: linear-gradient(
+    to bottom,
+    rgba(238, 242, 255, 0.95),
+    rgba(224, 231, 255, 0.8)
+  );
+  border: 1px solid rgba(199, 210, 254, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 24px -14px rgba(79, 70, 229, 0.3);
+}
+
+/* The one solid surface: a filled button needs to read as a single object. */
+.glass-filled {
+  background: linear-gradient(to bottom, var(--color-brand-500), var(--color-brand-600));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 20px -8px rgba(79, 70, 229, 0.7);
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion
+ * ------------------------------------------------------------------------- */
+.press {
+  transition:
+    transform 0.32s var(--ease-spring),
+    box-shadow 0.32s var(--ease-glide),
+    opacity 0.2s linear;
+}
+.press:active {
+  transform: scale(0.965);
+}
+
+/* Screens fade and lift in, so navigation reads as movement rather than a cut. */
+@keyframes screen-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.screen-in {
+  animation: screen-in 0.34s var(--ease-glide) both;
+}
+
+/* Cards arrive in sequence; the delay is set inline per index. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.rise-in {
+  animation: rise-in 0.42s var(--ease-glide) both;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+.mic-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--color-brand-500);
+  animation: mic-pulse 1.7s var(--ease-glide) infinite;
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* A highlight sweeping across a surface, used while something is loading. */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: shimmer 1.8s var(--ease-glide) infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Preferences
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Honour a request for less motion. The drifting backdrop and the looping mic
+ * pulse are exactly the kind of continuous movement that triggers discomfort,
+ * so they stop entirely rather than merely shorten.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .aurora {
+    animation: none;
+    transform: none;
+  }
+  .press:active {
+    transform: none;
+  }
+}
+
+/*
+ * Translucency is the first thing to go when someone asks for more contrast:
+ * text over a blurred backdrop is where these designs fail legibility.
+ */
+@media (prefers-contrast: more) {
+  .aurora {
+    display: none;
+  }
+  .glass,
+  .glass-strong,
+  .glass-brand {
+    background: #ffffff;
+    backdrop-filter: none;
+    border-color: var(--color-ink-400);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Base rules carried over
+ * ------------------------------------------------------------------------- */
 
 /* Momentum scrolling inside the scroll containers, as a native app has. */
 main,
@@ -76,23 +297,4 @@ button,
 nav,
 [role="tab"] {
   user-select: none;
-}
-
-@keyframes mic-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50% { transform: scale(1.35); opacity: 0; }
-}
-
-.mic-pulse::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: var(--color-brand-500);
-  animation: mic-pulse 1.6s ease-out infinite;
-}
-
-@keyframes dot-bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-  40% { transform: translateY(-4px); opacity: 1; }
 }

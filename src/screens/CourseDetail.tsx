@@ -44,7 +44,7 @@ function LectureRow({ unit, done }: { unit: Course["units"][number]; done: boole
   return (
     <Link
       to={`/lecture/${unit.id}`}
-      className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3 transition active:scale-[0.99]"
+      className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3 press"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-lg">
         {done ? "✓" : "🎬"}

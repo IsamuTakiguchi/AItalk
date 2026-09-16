@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { BottomNav } from "./components/BottomNav";
+import { BottomNav, NAV_HEIGHT } from "./components/BottomNav";
 import { dueReviewCount } from "./lib/progress";
 import { useHealth } from "./lib/useHealth";
 import { hydrateFromServer, stopSync, useProgress } from "./lib/useProgress";
@@ -49,6 +49,7 @@ export function App() {
   if (session.status === "out") {
     return (
       <div className="mx-auto w-full max-w-[480px]">
+        <div className="aurora" aria-hidden />
         <Login loginConfigured={health ? health.loginConfigured : null} />
       </div>
     );
@@ -57,12 +58,22 @@ export function App() {
 
   return (
     // 100dvh, not 100vh: iOS Safari's toolbar makes vh taller than the viewport.
-    <div className="flex h-[100dvh] flex-col">
+    // `relative` so the tab bar can overlay the scroll area rather than sit in a
+    // row of its own — content has to pass *under* the glass for it to read as
+    // glass at all.
+    <div className="relative flex h-[100dvh] flex-col">
+      <div className="aurora" aria-hidden />
       <main
         className="mx-auto w-full max-w-[480px] flex-1 overflow-y-auto"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          // Clears the overlaid tab bar so the last card is never trapped
+          // behind it. NAV_HEIGHT is the bar's own height; the safe-area inset
+          // is the home indicator below it.
+          paddingBottom: immersive ? 0 : `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom))`,
+        }}
       >
-        <Routes>
+        <Routes key={pathname}>
           <Route path="/" element={<Home />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/courses/:courseId" element={<CourseDetail />} />
@@ -84,7 +95,10 @@ export function App() {
 function Splash() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-3">
-      <span className="text-4xl">🗣️</span>
+      <div className="aurora" aria-hidden />
+      <span className="text-4xl" style={{ animation: "rise-in 0.6s var(--ease-spring) both" }}>
+        🗣️
+      </span>
       <span className="text-xs font-medium text-ink-400">読み込み中…</span>
     </div>
   );

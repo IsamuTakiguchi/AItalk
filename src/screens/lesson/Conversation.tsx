@@ -187,7 +187,7 @@ export function Conversation({
       </div>
 
       {keyPhrases && keyPhrases.length > 0 && (
-        <details className="mb-2 rounded-xl bg-white p-3 shadow-sm">
+        <details className="mb-2 rounded-xl glass p-3">
           <summary className="cursor-pointer text-xs font-semibold text-ink-600">
             使えるフレーズを見る
           </summary>
@@ -209,7 +209,7 @@ export function Conversation({
           <button
             type="button"
             onClick={() => onFinish(spokenTurns)}
-            className="w-full rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white active:scale-[0.98]"
+            className="w-full rounded-xl glass-filled py-3 text-sm font-semibold text-white press"
           >
             会話を終える
           </button>
@@ -222,7 +222,7 @@ export function Conversation({
                     key={s}
                     type="button"
                     onClick={() => void send(s)}
-                    className="shrink-0 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs text-ink-700 active:scale-95"
+                    className="shrink-0 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-xs text-ink-700 press"
                   >
                     {s}
                   </button>

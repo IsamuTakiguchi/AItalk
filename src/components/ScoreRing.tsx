@@ -23,11 +23,20 @@ export function ScoreRing({ score, size = 96 }: Props) {
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - score / 100)}
-            style={{ transition: "stroke-dashoffset 500ms ease-out" }}
+            style={{
+              // Starts empty and sweeps round, so the number lands with the arc.
+              animation: "none",
+              transition: "stroke-dashoffset 900ms var(--ease-glide)",
+            }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums">{score}</span>
+          <span
+            className="text-2xl font-bold tabular-nums"
+            style={{ animation: "rise-in 0.5s var(--ease-spring) both", animationDelay: "0.12s" }}
+          >
+            {score}
+          </span>
         </div>
       </div>
       <span className="text-sm font-semibold" style={{ color }}>

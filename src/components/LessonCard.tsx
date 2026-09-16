@@ -15,7 +15,7 @@ export function LessonCard({ lesson, record }: { lesson: Lesson; record?: Lesson
   return (
     <Link
       to={`/lesson/${lesson.id}`}
-      className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm transition active:scale-[0.99]"
+      className="flex items-center gap-3 rounded-xl glass p-3 press"
     >
       <div
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${

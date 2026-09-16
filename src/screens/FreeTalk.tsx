@@ -11,11 +11,12 @@ export function FreeTalk() {
     <Screen titleJa="フリートーク" subtitleJa="好きな話題でAI講師と話しましょう">
       {aiEnabled === false && <MockModeBanner />}
       <div className="grid grid-cols-2 gap-3">
-        {TALK_TOPICS.map((t) => (
+        {TALK_TOPICS.map((t, i) => (
           <Link
             key={t.id}
             to={`/talk/${t.id}`}
-            className="flex flex-col gap-1 rounded-2xl bg-white p-4 shadow-sm active:scale-[0.98]"
+            className="rise-in flex flex-col gap-1 rounded-2xl glass p-4 press"
+            style={{ animationDelay: `${i * 45}ms` }}
           >
             <span className="text-3xl">{t.emoji}</span>
             <span className="text-sm font-semibold">{t.titleJa}</span>

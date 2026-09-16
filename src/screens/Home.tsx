@@ -34,7 +34,7 @@ export function Home() {
       {reviewDue > 0 && (
         <Link
           to="/review"
-          className="flex items-center gap-3 rounded-xl border border-bad/20 bg-bad/5 p-3 active:scale-[0.99]"
+          className="flex items-center gap-3 rounded-xl border border-bad/20 bg-bad/5 p-3 press"
         >
           <span className="text-xl">🔁</span>
           <div className="flex-1">
@@ -52,14 +52,15 @@ export function Home() {
             すべて見る
           </Link>
         </div>
-        {COURSES.map((course) => {
+        {COURSES.map((course, i) => {
           const ids = course.units.flatMap((u) => u.lessons.map((l) => l.id));
           const { done, total } = courseProgress(progress, ids);
           return (
             <Link
               key={course.id}
               to={`/courses/${course.id}`}
-              className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm active:scale-[0.99]"
+              className="rise-in flex items-center gap-3 rounded-xl glass p-3 press"
+              style={{ animationDelay: `${i * 60}ms` }}
             >
               <span className="text-2xl">{course.emoji}</span>
               <div className="min-w-0 flex-1">
@@ -82,7 +83,7 @@ export function Home() {
 
       <Link
         to="/talk"
-        className="flex items-center gap-3 rounded-xl bg-brand-600 p-4 text-white shadow-sm active:scale-[0.99]"
+        className="flex items-center gap-3 rounded-xl glass-filled p-4 text-white press"
       >
         <span className="text-2xl">💬</span>
         <div className="flex-1">

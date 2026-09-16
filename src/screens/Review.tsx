@@ -55,7 +55,7 @@ export function Review() {
   if (queue.length === 0) {
     return (
       <Screen titleJa="復習" back>
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+        <div className="rounded-2xl glass p-6 text-center">
           <p className="text-4xl">🌤</p>
           <h2 className="mt-2 text-base font-bold">今は復習する項目がありません</h2>
           <p className="mt-1 text-xs leading-relaxed text-ink-500">
@@ -64,7 +64,7 @@ export function Review() {
         </div>
         <Link
           to="/"
-          className="block rounded-xl bg-brand-600 py-3 text-center text-sm font-semibold text-white active:scale-[0.98]"
+          className="block rounded-xl glass-filled py-3 text-center text-sm font-semibold text-white press"
         >
           ホームに戻る
         </Link>
@@ -75,14 +75,14 @@ export function Review() {
   if (!item) {
     return (
       <Screen titleJa="復習完了" back>
-        <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+        <div className="rounded-2xl glass p-6 text-center">
           <p className="text-4xl">✅</p>
           <h2 className="mt-2 text-base font-bold">{queue.length} 件の復習が終わりました</h2>
           <p className="mt-1 text-xs text-ink-500">できた項目は、次はもう少し先に出てきます。</p>
         </div>
         <Link
           to="/"
-          className="block rounded-xl bg-brand-600 py-3 text-center text-sm font-semibold text-white active:scale-[0.98]"
+          className="block rounded-xl glass-filled py-3 text-center text-sm font-semibold text-white press"
         >
           ホームに戻る
         </Link>
@@ -92,7 +92,7 @@ export function Review() {
 
   return (
     <Screen titleJa="復習" subtitleJa={`${index + 1} / ${queue.length}`} back>
-      <div className="rounded-2xl bg-white p-4 shadow-sm">
+      <div className="rounded-2xl glass p-4">
         <p className="text-[11px] font-medium text-ink-400">
           {item.kind === "correction" ? "添削された表現" : "苦手なフレーズ"}
           {item.timesWrong > 1 && `・${item.timesWrong} 回目`}
@@ -105,14 +105,14 @@ export function Review() {
             tts.unlock();
             void tts.speak(item.en);
           }}
-          className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 active:scale-95"
+          className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 press"
         >
           🔈 お手本を聞く
         </button>
       </div>
 
       {result ? (
-        <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="space-y-4 rounded-2xl glass p-4">
           {result.empty ? (
             <p className="text-center text-sm font-medium text-near">
               音声が聞き取れませんでした。もう一度お願いします。
@@ -133,14 +133,14 @@ export function Review() {
                 setResult(null);
                 stt.reset();
               }}
-              className="flex-1 rounded-xl border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 active:scale-[0.98]"
+              className="flex-1 rounded-xl border border-brand-200 bg-white py-3 text-sm font-semibold text-brand-700 press"
             >
               もう一度
             </button>
             <button
               type="button"
               onClick={advance}
-              className="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white active:scale-[0.98]"
+              className="flex-1 rounded-xl glass-filled py-3 text-sm font-semibold text-white press"
             >
               次へ
             </button>

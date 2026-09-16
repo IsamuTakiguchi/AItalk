@@ -7,7 +7,7 @@ export function StreakHeader({ progress }: { progress: Progress }) {
   const met = goalMet(progress);
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
+    <div className="flex items-center gap-4 rounded-2xl glass p-4">
       <div className="relative h-16 w-16 shrink-0">
         <svg width={64} height={64} className="-rotate-90">
           <circle cx={32} cy={32} r={27} fill="none" stroke="#e2e8f0" strokeWidth={6} />

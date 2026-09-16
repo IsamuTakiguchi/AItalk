@@ -82,7 +82,7 @@ function LessonResult({ lesson, done }: { lesson: Lesson; done: Done }) {
 
   return (
     <Screen titleJa="レッスン完了" back>
-      <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+      <div className="rounded-2xl glass p-6 text-center">
         <p className="text-4xl">🎉</p>
         <h2 className="mt-2 text-lg font-bold">{lesson.titleJa}</h2>
         <p className="mt-1 text-xs text-ink-500">よくがんばりました！</p>
@@ -105,14 +105,14 @@ function LessonResult({ lesson, done }: { lesson: Lesson; done: Done }) {
           <Link
             to={`/lesson/${next.id}`}
             replace
-            className="block rounded-xl bg-brand-600 py-3 text-center text-sm font-semibold text-white active:scale-[0.98]"
+            className="block rounded-xl glass-filled py-3 text-center text-sm font-semibold text-white press"
           >
             次のレッスンへ：{next.titleJa}
           </Link>
         )}
         <Link
           to="/"
-          className="block rounded-xl border border-ink-400/25 bg-white py-3 text-center text-sm font-semibold text-ink-700 active:scale-[0.98]"
+          className="block rounded-xl border border-ink-400/25 bg-white py-3 text-center text-sm font-semibold text-ink-700 press"
         >
           ホームに戻る
         </Link>

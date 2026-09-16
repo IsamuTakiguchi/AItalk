@@ -39,7 +39,7 @@ export function ChatBubble({ role, en, ja, showJa, onSpeak, speaking }: Props) {
 export function TypingBubble() {
   return (
     <div className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center gap-1 rounded-2xl glass px-4 py-4">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
