@@ -152,6 +152,11 @@ Postgres が常時起動するため Free の $1/月クレジットでは足り�
 - Android / Chrome: メニュー →「アプリをインストール」
 - iOS / Safari: 共有 →「ホーム画面に追加」
 
+iOS でホーム画面から起動した場合、iOS のバージョンによっては音声入力が使えない
+ことがあります（後述のとおり、Apple が Safari.app 以外で Web Speech API を
+有効にしていないため）。その場合は Safari で URL を直接開き直してください。
+うまく動かないときはアプリ内で理由とテキスト入力を案内します。
+
 ピンチズームは意図的に無効化していません。アプリらしく見せるために
 `user-scalable=no` を入れると、文字を拡大したい人を締め出してしまうためです。
 
@@ -222,10 +227,25 @@ Web Speech API が返すのはテキストだけで、音素単位のデータ�
 | ブラウザ | 音声認識 | 読み上げ | 備考 |
 |---|---|---|---|
 | Chrome / Edge（デスクトップ・Android） | ✅ | ✅ | 最も安定 |
-| Safari（macOS・iOS 14.5+） | ⚠️ | ✅ | 動くが不安定。読み上げ中は認識を開始できないため、実装側でTTSを停止してから開始している |
-| Firefox | ❌ | ✅ | `SpeechRecognition` 未対応。自動でテキスト入力に切り替わる |
+| Safari（macOS） | ⚠️ | ✅ | 動くが不安定。読み上げ中は認識を開始できないため、実装側でTTSを停止してから開始している |
+| **Safari（iOS 14.5+）** | ⚠️ | ✅ | **iOS で音声認識が使えるのはこれだけ**（下記） |
+| **Chrome / Edge / Firefox（iOS）** | ❌ | ✅ | Apple の制限。マイクを出さず Safari を案内する |
+| Firefox（デスクトップ・Android） | ❌ | ✅ | `SpeechRecognition` 未対応。自動でテキスト入力に切り替わる |
 
-マイクが使えない場合（未対応ブラウザ・権限拒否・非HTTPS）は、
+### iOS で音声認識が使えるのは Safari だけです
+
+iOS はすべてのブラウザに WebKit を強制しますが、**Apple は WKWebView で
+Web Speech API を有効にしていません**。有効なのは Safari.app 本体だけです。
+そのため iOS 版の Chrome・Edge・Firefox、および LINE や Instagram などの
+アプリ内ブラウザでは、音声認識は動きません。
+
+やっかいなのは `webkitSpeechRecognition` コンストラクタ自体はこれらにも
+存在し、`start()` も成功して `onstart` まで発火することです。機能検出だけでは
+「対応している」と誤判定し、マイクは開いたように見えて音声が一切届きません。
+そのため `src/lib/speech/support.ts` の `isIOSWebView()` で UA を見て、
+iOS かつ Safari 本体でない場合はマイクを出さず、理由とテキスト入力を案内します。
+
+マイクが使えない場合（未対応ブラウザ・iOS の非 Safari・権限拒否・非HTTPS）は、
 必ずテキスト入力にフォールバックします。行き止まりにはなりません。
 
 ## プライバシー

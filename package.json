@@ -10,7 +10,7 @@
     "build": "vite build",
     "start": "tsx src/server/node.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx src/lib/mergeProgress.test.ts && tsx src/server/auth.test.ts && tsx src/server/youtube.test.ts && tsx src/server/progressStore.test.ts"
+    "test": "tsx src/lib/mergeProgress.test.ts && tsx src/lib/speech/support.test.ts && tsx src/server/auth.test.ts && tsx src/server/youtube.test.ts && tsx src/server/progressStore.test.ts"
   },
   "engines": {
     "node": ">=22"
